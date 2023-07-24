@@ -1,4 +1,4 @@
-FROM frolvlad/alpine-glibc:alpine-3.12
+FROM debian:latest
 
 LABEL maintainer="https://github.com/factoriotools/factorio-docker"
 
@@ -26,7 +26,7 @@ ENV PORT=34197 \
     PUID="$PUID" \
     PGID="$PGID"
 
-SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+SHELL ["/bin/bash", "-eo", "pipefail", "-c"]
 RUN set -ox pipefail \
     && if [[ "${VERSION}" == "" ]]; then \
         echo "build-arg VERSION is required" \
@@ -38,7 +38,9 @@ RUN set -ox pipefail \
     fi \
     && archive="/tmp/factorio_headless_x64_$VERSION.tar.xz" \
     && mkdir -p /opt /factorio \
-    && apk add --update --no-cache --no-progress bash binutils curl file gettext jq libintl pwgen shadow su-exec \
+    && dpkg --add-architecture amd64 \
+    && apt -qq update \
+    && apt -qq install -y binutils curl file gettext gosu jq libc6:amd64 pwgen xz-utils \
     && curl -sSL "https://www.factorio.com/get-download/$VERSION/headless/linux64" -o "$archive" --retry $CURL_RETRIES\
     && echo "$SHA256  $archive" | sha256sum -c \
     || (sha256sum "$archive" && file "$archive" && exit 1) \
@@ -48,8 +50,8 @@ RUN set -ox pipefail \
     && ln -s "$SCENARIOS" /opt/factorio/scenarios \
     && ln -s "$SAVES" /opt/factorio/saves \
     && mkdir -p /opt/factorio/config/ \
-    && addgroup -g "$PGID" -S "$GROUP" \
-    && adduser -u "$PUID" -G "$GROUP" -s /bin/sh -SDH "$USER" \
+    && addgroup -gid "$PGID" --system "$GROUP" \
+    && adduser -uid "$PUID" --ingroup "$GROUP" --shell /bin/sh --system --disabled-password --no-create-home "$USER" \
     && chown -R "$USER":"$GROUP" /opt/factorio /factorio
 
 COPY files/*.sh /

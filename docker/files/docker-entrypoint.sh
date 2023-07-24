@@ -7,6 +7,7 @@ GENERATE_NEW_SAVE="${GENERATE_NEW_SAVE:-false}"
 SAVE_NAME="${SAVE_NAME:-""}"
 BIND="${BIND:-""}"
 CONSOLE_LOG_LOCATION="${CONSOLE_LOG_LOCATION:-""}"
+QEMU_EXECVE=1
 
 mkdir -p "$FACTORIO_VOL"
 mkdir -p "$SAVES"
@@ -50,7 +51,7 @@ if [[ $(id -u) = 0 ]]; then
   # Take ownership of factorio data if running as root
   chown -R factorio:factorio "$FACTORIO_VOL"
   # Drop to the factorio user
-  SU_EXEC="su-exec factorio"
+  SU_EXEC="gosu factorio"
 else
   SU_EXEC=""
 fi
